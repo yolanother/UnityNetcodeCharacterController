@@ -11,17 +11,37 @@ namespace DoubTech.Networking
         [SerializeField] private Button clientButton;
         [SerializeField] private Button disconnectButton;
 
+        private bool initialized = false;
+
         private void Awake()
         {
             disconnectButton.gameObject.SetActive(false);
-            serverButton.onClick.AddListener(() => NetworkManager.Singleton.StartServer());
-            hostButton.onClick.AddListener(() => NetworkManager.Singleton.StartHost());
-            clientButton.onClick.AddListener(() => NetworkManager.Singleton.StartClient());
+            serverButton.onClick.AddListener(() =>
+            {
+                Initialize();
+                NetworkManager.Singleton.StartServer();
+            });
+            hostButton.onClick.AddListener(() =>
+            {
+                Initialize();
+                NetworkManager.Singleton.StartHost();
+            });
+            clientButton.onClick.AddListener(() => {
+                Initialize();
+                NetworkManager.Singleton.StartClient();
+            });
             disconnectButton.onClick.AddListener(() =>
             {
+                Initialize();
                 NetworkManager.Singleton.Shutdown();
                 OnDisconnected();
             });
+        }
+
+        private void Initialize()
+        {
+            if (initialized) return;
+            initialized = true;
 
             NetworkManager.Singleton.OnServerStarted += OnConnected;
             NetworkManager.Singleton.OnClientConnectedCallback += (uid) =>
