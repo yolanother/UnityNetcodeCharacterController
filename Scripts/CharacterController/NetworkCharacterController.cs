@@ -163,6 +163,7 @@ namespace StarterAssets
             {
                 if (_inputLook != _input.look)
                 {
+                    Debug.Log($"Input look is now: {_input.look}");
                     _inputLook = _input.look;
                     UpdateLookServerRpc(_input.look);
                 }
