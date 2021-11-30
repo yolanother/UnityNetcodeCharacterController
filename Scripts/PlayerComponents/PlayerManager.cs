@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,6 +20,7 @@ namespace DoubTech.Networking.PlayerComponents
         public int PlayerCount => NetworkManager.Singleton.ConnectedClients.Count;
 
         private List<PlayerSpawnPoint> sceneSpawnPoints = new List<PlayerSpawnPoint>();
+        private HashSet<ulong> processedClients = new HashSet<ulong>();
 
         private void OnEnable()
         {
@@ -33,20 +35,32 @@ namespace DoubTech.Networking.PlayerComponents
             }
         }
 
-        private void Start()
+        private IEnumerator Start()
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+
+            Debug.Log("Player manager waiting for connection...");
+
+            yield return new WaitUntil(() => NetworkManager.Singleton.IsConnectedClient || NetworkManager.IsHost);
+            Debug.Log("Player is connected.");
+            if (NetworkManager.Singleton.IsConnectedClient || NetworkManager.IsHost)
+            {
+                OnClientConnected(NetworkManager.Singleton.LocalClientId);
+            }
         }
 
         protected virtual void OnClientDisconnected(ulong clientId)
         {
             onClientConnected.Invoke(clientId);
+            processedClients.Remove(clientId);
         }
 
         protected virtual void OnClientConnected(ulong clientId)
         {
-            onClientDisconnected.Invoke(clientId);
+            if (processedClients.Contains(clientId)) return;
+            processedClients.Add(clientId);
+            onClientConnected.Invoke(clientId);
 
             if (IsHost || IsServer)
             {
