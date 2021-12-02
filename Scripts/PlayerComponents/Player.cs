@@ -1,7 +1,9 @@
+using System;
 using Cinemachine;
 using DoubTech.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Player : NetworkBehaviour
 {
@@ -10,6 +12,31 @@ public class Player : NetworkBehaviour
 
     [SerializeField] private Behaviour[] localPlayerBehaviours;
     [SerializeField] private Behaviour[] remotePlayerBehaviours;
+
+    [SerializeField] public UnityEvent onSwitchedToFPS = new UnityEvent();
+    [SerializeField] public UnityEvent onSwitchedToTPS = new UnityEvent();
+
+    public bool IsFPS => CinemachineCore.Instance?.GetActiveBrain(0)?.ActiveVirtualCamera
+        ?.VirtualCameraGameObject?.CompareTag("FPSVirtualCamera") ?? false;
+
+    private void OnEnable()
+    {
+        if (IsFPS) onSwitchedToFPS.Invoke();
+        else onSwitchedToTPS.Invoke();
+        CinemachineCore.Instance.GetActiveBrain(0).m_CameraActivatedEvent.AddListener(OnCameraActivated);
+    }
+
+    private void OnDisable()
+    {
+        CinemachineCore.Instance.GetActiveBrain(0).m_CameraActivatedEvent
+            .RemoveListener(OnCameraActivated);
+    }
+
+    private void OnCameraActivated(ICinemachineCamera oldCamera, ICinemachineCamera newCamera)
+    {
+        if(IsFPS) onSwitchedToFPS.Invoke();
+        else onSwitchedToTPS.Invoke();
+    }
 
     public override void OnNetworkSpawn()
     {
