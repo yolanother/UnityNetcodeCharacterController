@@ -74,9 +74,7 @@ namespace DoubTech.Networking.PlayerComponents
                     }
                 }
 
-                var prefab = Instantiate(playerPrefab);
-                prefab.transform.position = spawnPoint.transform.position;
-                prefab.transform.rotation = spawnPoint.transform.rotation;
+                var prefab = Instantiate(playerPrefab, spawnPoint.transform.position, spawnPoint.transform.rotation);
                 prefab.SpawnAsPlayerObject(clientId);
             }
         }
