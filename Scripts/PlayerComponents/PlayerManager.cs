@@ -19,7 +19,7 @@ namespace DoubTech.Networking.PlayerComponents
 
         public int PlayerCount => NetworkManager.Singleton.ConnectedClients.Count;
 
-        private List<PlayerSpawnPoint> sceneSpawnPoints = new List<PlayerSpawnPoint>();
+        protected List<PlayerSpawnPoint> sceneSpawnPoints = new List<PlayerSpawnPoint>();
         private HashSet<ulong> processedClients = new HashSet<ulong>();
 
         private void OnEnable()
@@ -58,25 +58,61 @@ namespace DoubTech.Networking.PlayerComponents
 
         protected virtual void OnClientConnected(ulong clientId)
         {
-            if (processedClients.Contains(clientId)) return;
+            StartCoroutine(OnClientConnectedAsync(clientId));
+        }
+
+        protected IEnumerator OnClientConnectedAsync(ulong clientId)
+        {
+            if (processedClients.Contains(clientId)) yield break;
+
             processedClients.Add(clientId);
             onClientConnected.Invoke(clientId);
 
-            if (IsHost || IsServer)
+            if (CanSpawn)
             {
-                var spawnPoint = sceneSpawnPoints[0];
-                for (int i = 0; i < sceneSpawnPoints.Count; i++)
-                {
-                    if (sceneSpawnPoints[i].IsAvailable)
-                    {
-                        spawnPoint = sceneSpawnPoints[i];
-                        break;
-                    }
-                }
+                yield return OnPrePlayerSpawn(clientId);
 
-                var prefab = Instantiate(playerPrefab, spawnPoint.transform.position, spawnPoint.transform.rotation);
-                prefab.SpawnAsPlayerObject(clientId);
+                yield return OnSpawnPlayer(clientId);
+
+                yield return OnPostPlayerSpawn(clientId);
             }
         }
+
+        protected virtual IEnumerator OnSpawnPlayer(ulong clientId)
+        {
+            var sceneSpawnPoints = OnGetSpawnPoints(clientId);
+            var spawnPoint = sceneSpawnPoints[0];
+            for (int i = 0; i < sceneSpawnPoints.Count; i++)
+            {
+                if (sceneSpawnPoints[i].IsAvailable)
+                {
+                    spawnPoint = sceneSpawnPoints[i];
+                    break;
+                }
+            }
+
+            var prefab = Instantiate(playerPrefab, spawnPoint.transform.position,
+                spawnPoint.transform.rotation);
+            prefab.SpawnAsPlayerObject(clientId);
+
+            yield return null;
+        }
+
+        protected virtual List<PlayerSpawnPoint> OnGetSpawnPoints(ulong clientId)
+        {
+            return sceneSpawnPoints;
+        }
+
+        protected virtual IEnumerator OnPostPlayerSpawn(ulong clientId)
+        {
+            yield return null;
+        }
+
+        protected virtual IEnumerator OnPrePlayerSpawn(ulong clientId)
+        {
+            yield return null;
+        }
+
+        public bool CanSpawn => IsHost || IsServer;
     }
 }
