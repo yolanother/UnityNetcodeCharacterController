@@ -14,6 +14,8 @@ namespace DoubTech.Networking.PlayerComponents
 
         public UnityEvent<ulong> onClientConnected = new UnityEvent<ulong>();
         public UnityEvent<ulong> onClientDisconnected = new UnityEvent<ulong>();
+        public UnityEvent<ulong> onClientSpawnComplete = new UnityEvent<ulong>();
+        public UnityEvent<ulong> onLocalSpawnComplete = new UnityEvent<ulong>();
 
         public UnityEvent onLocalClientConnected = new UnityEvent();
 
@@ -75,6 +77,8 @@ namespace DoubTech.Networking.PlayerComponents
                 yield return OnSpawnPlayer(clientId);
 
                 yield return OnPostPlayerSpawn(clientId);
+
+                OnClientSpawnCompleteClientRpc(clientId);
             }
         }
 
@@ -111,6 +115,16 @@ namespace DoubTech.Networking.PlayerComponents
         protected virtual IEnumerator OnPrePlayerSpawn(ulong clientId)
         {
             yield return null;
+        }
+
+        [ClientRpc]
+        public void OnClientSpawnCompleteClientRpc(ulong clientid)
+        {
+            onClientSpawnComplete.Invoke(clientid);
+            if (clientid == NetworkManager.LocalClientId)
+            {
+                onLocalSpawnComplete.Invoke(clientid);
+            }
         }
 
         public bool CanSpawn => IsHost || IsServer;

@@ -146,6 +146,11 @@ namespace StarterAssets
         private void OnEnable()
         {
             _input = FindObjectOfType<NetworkMultiplayerInput>();
+            ResetAnimator();
+        }
+
+        public void ResetAnimator()
+        {
             _animator = GetComponentInChildren<Animator>();
             _hasAnimator = _animator;
         }
