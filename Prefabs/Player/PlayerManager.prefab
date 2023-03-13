@@ -45,8 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99e04660f29f46dc8618d12d7a9f1525, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 4117709169177041910, guid: f21a05e1505bb7a41bd70902c6ce3483,
-    type: 3}
+  playerPrefab: {fileID: 4117709169177041910, guid: f21a05e1505bb7a41bd70902c6ce3483, type: 3}
   playerSpawnPoints:
   - {fileID: 0}
   - {fileID: 0}
@@ -54,10 +53,17 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  scanSceneForAdditionalSpawnPoints: 0
   onClientConnected:
     m_PersistentCalls:
       m_Calls: []
   onClientDisconnected:
+    m_PersistentCalls:
+      m_Calls: []
+  onClientSpawnComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onLocalSpawnComplete:
     m_PersistentCalls:
       m_Calls: []
   onLocalClientConnected:

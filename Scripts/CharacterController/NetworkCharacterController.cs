@@ -74,6 +74,10 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [Header("Armature")]
+        [SerializeField] private GameObject _armaturePrefab;
+        [SerializeField] private RuntimeAnimatorController _animatorController;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -125,6 +129,11 @@ namespace StarterAssets
 
         private void Awake()
         {
+            if (_armaturePrefab)
+            {
+                SetArmature(_armaturePrefab);
+            }
+            
             // get a reference to our main camera
             if (_mainCamera == null)
             {
@@ -151,8 +160,18 @@ namespace StarterAssets
 
         public void ResetAnimator()
         {
+            FPSCameraTarget.transform.parent = transform;
             _animator = GetComponentInChildren<Animator>();
             _hasAnimator = _animator;
+            if(_animator) _animator.runtimeAnimatorController = _animatorController;
+
+            if (FPSCameraTarget)
+            {
+                var headTransform = _animator.GetBoneTransform(HumanBodyBones.Head);
+                FPSCameraTarget.transform.parent = headTransform ?? transform;
+                FPSCameraTarget.transform.localPosition = Vector3.zero;
+                FPSCameraTarget.transform.localRotation = Quaternion.identity;
+            }
         }
 
         private void Update()
@@ -205,6 +224,40 @@ namespace StarterAssets
 
             UpdateAnims();
         }
+        
+        #region Armature Spawning
+        public void SetArmature(string path)
+        {
+            SetArmatureServerRpc(path);
+        }
+        
+        [ServerRpc]
+        public void SetArmatureServerRpc(string path)
+        {
+            SetArmature(Resources.Load(path) as GameObject);
+        }
+        
+        [ClientRpc]
+        public void ResetArmatureClientRpc()
+        {
+            ResetAnimator();
+        }
+        
+        protected void SetArmature(GameObject armature)
+        {
+            if (!armature) return;
+            
+            var model = transform.Find("Model");
+            var instance = Instantiate(armature, model);
+            
+            var netObj = armature.GetComponent<NetworkObject>();
+            if(netObj) netObj.Spawn();
+            
+            var animEventHandler = instance.GetComponent<AnimationEventHandler>();
+            if (!animEventHandler) instance.AddComponent<AnimationEventHandler>();
+            ResetAnimator();
+        }
+        #endregion
 
         [ServerRpc(RequireOwnership = false)]
         private void UpdateCameraAngleServerRpc(float cameraAngle)
